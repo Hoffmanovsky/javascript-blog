@@ -1,5 +1,14 @@
 {
     'use strict';
+
+    const templates = {
+        articleLink: Handlebars.compile(document.querySelector('#template-article-link').innerHTML),
+        tagLink: Handlebars.compile(document.querySelector('#template-tag-link').innerHTML),
+        authorLink: Handlebars.compile(document.querySelector('#template-author-link').innerHTML),
+        tagCloudLink: Handlebars.compile(document.querySelector('#template-tag-cloud-link').innerHTML),
+        authorListLink: Handlebars.compile(document.querySelector('#template-author-list-link').innerHTML)
+    }
+
     const titleClickHandler = function (event) {
         event.preventDefault();
         const clickedElement = this;
@@ -41,7 +50,8 @@
         for(let article of articles) {
             const articleId = article.getAttribute('id');
             const articleTitle = article.querySelector(optTitleSelector).innerHTML;
-            const linkHTML = '<li><a href="#' + articleId + '"><span>' + articleTitle + '</span></a></li>';
+            const linkHTMLData = {id: articleId, title: articleTitle};
+            const linkHTML = templates.articleLink(linkHTMLData);
             html = html + linkHTML;
         }
 
@@ -94,7 +104,8 @@
             const articleTagsArray = articleTags.split(' ');
 
             for (let tag of articleTagsArray) {
-                let tagHTML = '<li><a href="#tag-' + tag + '">' + tag + '</a></li> ';
+                const tagHTMLData = {id: tag};
+                const tagHTML = templates.tagLink(tagHTMLData);
                 html = html + tagHTML;
                 if(!allTags[tag]) {
                     allTags[tag] = 1;
@@ -107,13 +118,18 @@
         const tagList = document.querySelector('.tags');
         const tagsParams = calculateTagsParams(allTags);
         console.log('tagsParams:', tagsParams)
-        let allTagsHTML = '';
+        const allTagsData = {tags: []};
 
         for(let tag in allTags){
-            allTagsHTML += '<li><a href="#tag-' + tag + '" class="' + optCloudClassPrefix + calculateTagClass(allTags[tag], tagsParams) + '">' + tag + ' (' + allTags[tag] + ') </a></li>';
+            allTagsData.tags.push({
+                tag: tag,
+                count: allTags[tag],
+                classPrefix: optCloudClassPrefix,
+                className: calculateTagClass(allTags[tag], tagsParams)
+            });
         }
 
-        tagList.innerHTML = allTagsHTML;
+        tagList.innerHTML = templates.tagCloudLink(allTagsData);
     }
     generateTags();
 
@@ -153,7 +169,9 @@
         for (let article of articles) {
             const authorWrapper = article.querySelector(optArticleAuthorSelector);
             const articleAuthor = article.getAttribute('data-author');
-            authorWrapper.innerHTML = 'by <a href="#author-' + articleAuthor + '">' + articleAuthor + '</a> ';
+            const authorHTMLData = {id: articleAuthor};
+            const authorHTML = templates.authorLink(authorHTMLData);
+            authorWrapper.innerHTML = authorHTML;
 
             if (!allAuthors[articleAuthor]) {
                 allAuthors[articleAuthor] = 1;
@@ -162,15 +180,16 @@
             }
         }
             const authorList = document.querySelector(optAuthorsListSelector);
-            let allAuthorsHTML = '';
+            const allAuthorsData = {tags: []};
             for (let author in allAuthors){
-                allAuthorsHTML += '<li><a href="#author-' + author + '">' + author + ' (' + allAuthors[author] + ') </a></li>';
+                allAuthorsData.tags.push({
+                    author: author,
+                    count: allAuthors[author],
+                });
             }
-            authorList.innerHTML = allAuthorsHTML;
-
+            authorList.innerHTML = templates.authorListLink(allAuthorsData);
     }
     generateAuthors();
-
 
     const authorClickHandler = function(event){
         event.preventDefault();
@@ -181,7 +200,6 @@
 
         generateTitleLinks('[data-author="' + author + '"]')
     }
-
 
     const addClickListenerToAuthors = function(){
         const authors = document.querySelectorAll('a[href^="#author-"]');
